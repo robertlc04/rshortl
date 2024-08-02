@@ -1,0 +1,23 @@
+{
+  "name": "rshortl",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robertlc04/rshortl.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/robertlc04/rshortl/issues"
+  },
+  "homepage": "https://github.com/robertlc04/rshortl#readme",
+  "description": "",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
