@@ -1,5 +1,5 @@
 const https = require('https');
-
+const path = require('path');
 
 const getStatus = (url) => {
     
@@ -10,7 +10,7 @@ const getStatus = (url) => {
             hostname,
             port: 443,
             path: pathname,
-            timeout: 1000  // Timeout after 1 seconds
+            timeout: 2000  // Timeout after 1 seconds
         };
 
         const req = https.get(options, res => {
@@ -60,10 +60,10 @@ const urlErrors = (req,res,next) => {
     
     getStatus(link)
     .then(status => {
-        if (status === 200) {
+        if (status >= 200 && status < 400) {
             next()
         } else {
-            res.status(400).send({ type: "Bad Request", error: "The url doesn't exist"})
+            res.status(status).send({ type: "Bad Request", error: "The url doesn't exist"})
         }
     })
     .catch(error => {
@@ -74,19 +74,28 @@ const urlErrors = (req,res,next) => {
 
 
 const errorLogs = async (err, req, res, next) => {
-    console.error(`Error: ${err}`)
+    console.error(`${err}`)
     next(err)
 }
 
 const errorHandler = async (err,req, res, next) => {
 
-    // errorLogs(req, res, next)
+    console.log(err.code);
 
-    // urlErrors(req, res, next)
-
+    if (err.code === "ENOTFOUND") {
+        res.status(404).send(`
+            <script>
+                localStorage.setItem('error', '${err}');
+                window.location.href = '/error';
+            </script>
+        `)
+        return
+    }
+    
+    
     res.status(500).send({ type: "Internal Server Error", error: "Something went wrong"})
 
-    return
+    next()
 
 }
 

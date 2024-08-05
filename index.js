@@ -9,14 +9,16 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(middlewares.errorLogs);
-app.use(middlewares.errorHandler);
-
 try { 
    routes(app);
 } catch (error) {
     console.log(error)
-    
 }
+
+app.use(middlewares.urlErrors);
+app.use(middlewares.errorLogs);
+app.use(middlewares.errorHandler);
+
+
 
 app.listen(process.env.PORT || 3000);

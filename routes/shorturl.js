@@ -6,9 +6,10 @@ const shortlinkPost = (req,res) => {
 
     const shortLink = new ShortLink(link)
 
-    console.log(shortLink.createShortlink());
+    const shortlink = shortLink.createShortlink();
+    
 
-    res.send("Hello World")
+    res.send(shortLink)
 }
 
 module.exports = { shortlinkPost }
