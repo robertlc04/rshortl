@@ -30,6 +30,7 @@ const shortlinkGet = async(req,res) => {
         const link = await db.getLink(shortlink)
                         .then((data) => data)
                         .catch(err => console.log(err))
+        db.disconnect()
         if (link == null) {
             const { output } = new boomErrors.notFound("The shortlink doesn't exist")
             res.status(output.statusCode).send(output.payload)
