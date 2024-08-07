@@ -17,6 +17,7 @@ try {
 
 app.use(middlewares.urlErrors);
 app.use(middlewares.errorLogs);
+app.use(middlewares.boomErrorHandler);
 app.use(middlewares.errorHandler);
 
 

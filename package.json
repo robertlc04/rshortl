@@ -19,6 +19,7 @@
   "homepage": "https://github.com/robertlc04/rshortl#readme",
   "description": "",
   "dependencies": {
+    "@hapi/boom": "^10.0.1",
     "express": "^4.19.2",
     "mongodb": "^6.8.0",
     "uuid": "^10.0.0"

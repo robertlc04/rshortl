@@ -1,5 +1,6 @@
 const https = require('https');
 const path = require('path');
+const boomErrors = require('@hapi/boom');
 
 const getStatus = (url) => {
     
@@ -10,11 +11,14 @@ const getStatus = (url) => {
             hostname,
             port: 443,
             path: pathname,
+            headers: new Headers({
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.3',
+            }),
             timeout: 2000  // Timeout after 1 seconds
         };
 
         const req = https.get(options, res => {
-            resolve(res.statusCode)
+            resolve({ statusCode: res.statusCode, statusMessage: res.statusMessage })
         }).on('error', error => {
             reject(error)
         })
@@ -52,47 +56,71 @@ const urlExist = (url) => {
 
 const urlErrors = (req,res,next) => {
     const { link } = req.body
+
+    if (req.method == 'GET') {
+        const shortlink = req.path.replace('/', '')
+
+        if (shortlink.length != 8) {
+            const { output } = new boomErrors.badData("Insert a correct url")
+            res.status(output.statusCode).send(output.payload)
+            return
+        } else {
+            next()
+            return
+        }
+    }
+
     if (!urlExist(link)) {
-        res.status(400).send({ type: "Bad Request", error: "Insert a correct url"})
+        const { output } = new boomErrors.badRequest("Insert a correct url")
+        res.status(output.statusCode).send(output.payload)
         return
     }
 
     
     getStatus(link)
-    .then(status => {
-        if (status >= 200 && status < 400) {
+    .then(payload => {
+        if (payload.statusCode >= 200 && payload.statusCode < 400) {
             next()
+            return
         } else {
-            res.status(status).send({ type: "Bad Request", error: "The url doesn't exist"})
+            next(payload)
+            return
         }
     })
     .catch(error => {
         next(error)
+        return
     })
 
 }
 
-
 const errorLogs = async (err, req, res, next) => {
+    if (typeof err == 'object') {
+        console.error(...Object.values(err));
+        next(err)
+        return
+    }
     console.error(`${err}`)
     next(err)
 }
 
+const boomErrorHandler = (err, req, res, next) => {
+    if (err.code == 'ENOTFOUND') {
+        const { output } = new boomErrors.notFound("Url Not Found")
+        res.status(output.statusCode).send(output.payload)
+        return 
+    }
+    const boomErr = boomErrors.boomify(new Error(err.statusMessage), { statusCode: err.statusCode });
+    if (boomErr != undefined) {
+        const { output } = boomErr
+        res.status(output.statusCode).send(output.payload)
+    } else {
+        next(err)
+    }
+}
+
 const errorHandler = async (err,req, res, next) => {
 
-    console.log(err.code);
-
-    if (err.code === "ENOTFOUND") {
-        res.status(404).send(`
-            <script>
-                localStorage.setItem('error', '${err}');
-                window.location.href = '/error';
-            </script>
-        `)
-        return
-    }
-    
-    
     res.status(500).send({ type: "Internal Server Error", error: "Something went wrong"})
 
     next()
@@ -100,4 +128,4 @@ const errorHandler = async (err,req, res, next) => {
 }
 
 
-module.exports = { errorHandler, errorLogs ,urlErrors}
+module.exports = { errorHandler, boomErrorHandler ,errorLogs ,urlErrors}
