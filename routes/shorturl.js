@@ -8,7 +8,7 @@ const shortlinkPost = (req,res) => {
 
     // Start Instance
     const shortLink = new ShortLink(link)
-    const shortlink = shortLink.createShortlink();
+    shortLink.createShortlink();
     
     const db = new DB();
 
