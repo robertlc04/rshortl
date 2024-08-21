@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" >
+    <link rel="stylesheet" href="./style.css" >
+    <title>Rshortl</title>
+</head>
+<body>
+    <%- include('utils/header') %>
+
+    <section class="main">
+        <div class="gradient-box">
+            <div class="shortlink-container">
+                <input type="text" readonly="readonly" class="shortlink">
+                <button class="copy_btn">
+                    <img class="copy_btn_icon" src="./assets/copy.svg" alt="copy-icon">
+                </button>
+            </div> 
+            <%- include('utils/info') %>
+            <%- include('utils/backhome' , {data: {message: "Make a new short url"}}) %>
+        </div>
+    </section>
+
+    <%- include('utils/footer') %>
+</body>
+<script>
+    const data = "<%= data %>";
+    const shortlink = document.querySelector(".shortlink");
+    shortlink.value = window.location.origin + '/' + data;
+
+    const copy_btn = document.querySelector(".copy_btn");
+    const copy_btn_icon = document.querySelector(".copy_btn_icon");
+    console.log(copy_btn_icon);
+
+    copy_btn.addEventListener("click", () => {
+        window.navigator.clipboard.writeText(shortlink.value)
+        copy_btn_icon.src = "./assets/paste.svg"
+    })
+
+
+
+</script>
+</html>

@@ -11,27 +11,31 @@ const getStatus = (url) => {
             hostname,
             port: 443,
             path: pathname,
-            headers: new Headers({
+            headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.3',
-            }),
-            timeout: 2000  // Timeout after 1 seconds
+                'Method' : 'HEAD',
+            },
+            timeout: 1000  // Timeout after 1 seconds
         };
 
-        const req = https.get(options, res => {
+        console.time()
+        const req = https.request(options, res => {
             resolve({ statusCode: res.statusCode, statusMessage: res.statusMessage })
         }).on('error', error => {
             reject(error)
         })
 
-        req.on('timeout', () => {
-            req.abort()
+        req.on('timeout', (err) => {
+            console.log('TIMEOUT', err);
             reject(new Error('Timeout')) 
         })
+        console.timeEnd()
 
         req.end()
     })
 
 }
+
 
 /**
  * Checks if the given URL exists and is valid.
@@ -54,6 +58,16 @@ const urlExist = (url) => {
     return URL.canParse(url)
 }
 
+const retryGetStatus = (url, retries = 3) => {
+    return getStatus(url).catch(error => {
+        console.log("Retrying..." + retries);
+        if (retries > 0) {
+            return retryGetStatus(url, retries - 1)
+        }
+        throw error
+    })
+}
+
 const urlErrors = (req,res,next) => {
     const { link } = req.body
 
@@ -62,7 +76,7 @@ const urlErrors = (req,res,next) => {
 
         if (shortlink.length != 8) {
             const { output } = new boomErrors.badData("Insert a correct url")
-            res.status(output.statusCode).send(output.payload)
+            res.status(output.statusCode).render( 'error', { error : output.payload})
             return
         } else {
             next()
@@ -72,7 +86,7 @@ const urlErrors = (req,res,next) => {
 
     if (!urlExist(link)) {
         const { output } = new boomErrors.badRequest("Insert a correct url")
-        res.status(output.statusCode).send(output.payload)
+        res.status(output.statusCode).render( 'error', { error : output.payload})
         return
     }
 
@@ -88,6 +102,12 @@ const urlErrors = (req,res,next) => {
         }
     })
     .catch(error => {
+        if (error.code == 'ECONNRESET') {
+            retryGetStatus(link).catch(error => {
+                next(err)
+                return
+            })
+        }
         next(error)
         return
     })
@@ -96,6 +116,7 @@ const urlErrors = (req,res,next) => {
 
 const errorLogs = async (err, req, res, next) => {
     if (typeof err == 'object') {
+        console.error(err);
         console.error(...Object.values(err));
         next(err)
         return
@@ -107,13 +128,21 @@ const errorLogs = async (err, req, res, next) => {
 const boomErrorHandler = (err, req, res, next) => {
     if (err.code == 'ENOTFOUND') {
         const { output } = new boomErrors.notFound("Url Not Found")
-        res.status(output.statusCode).send(output.payload)
+        console.log(output.payload);
+        res.status(output.statusCode).render( 'error', { error : output.payload})
         return 
     }
+    if (error.code == 'ECONNRESET') {
+        const { output } = new boomErrors.badGateway("Bad Gateway")
+        console.log(output.payload);
+        res.status(output.statusCode).render( 'error', { error : output.payload})
+        return 
+    }
+
     const boomErr = boomErrors.boomify(new Error(err.statusMessage), { statusCode: err.statusCode });
     if (boomErr != undefined) {
         const { output } = boomErr
-        res.status(output.statusCode).send(output.payload)
+        res.status(output.statusCode).render( 'error', { error : output.payload})
     } else {
         next(err)
     }
@@ -121,7 +150,7 @@ const boomErrorHandler = (err, req, res, next) => {
 
 const errorHandler = async (err,req, res, next) => {
 
-    res.status(500).send({ type: "Internal Server Error", error: "Something went wrong"})
+    res.status(500).render( 'error', { error : { error: "Internal Server Error", message: "Something went wrong"}})
 
     next()
 

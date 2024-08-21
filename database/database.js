@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const { MongoClient, ServerApiVersion } = require("mongodb");
-const uri = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASS}@rshortldb.f74jh4h.mongodb.net/?retryWrites=true&w=majority&appName=RshortlDB`;
+const uri = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASS}@rshortldb2.f74jh4h.mongodb.net/?retryWrites=true&w=majority&appName=RshortlDB`;
 
 class Database {
   constructor() {

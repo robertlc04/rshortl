@@ -17,8 +17,9 @@ const shortlinkPost = (req,res) => {
     } else {
         res.status(500).send({ type: "Internal Server Error", error: "Something went wrong"})
     }
+    console.log("Shortlink: " + shortLink.shortlink);
 
-    res.send(shortLink.shortlink)
+    res.render('shorturl', {data: shortLink.shortlink } )
 }
 
 const shortlinkGet = async(req,res) => {
