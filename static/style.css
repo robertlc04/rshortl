@@ -192,6 +192,7 @@ body {
 
 .shortlink-container > input {
     margin: 0 10px;
+    width: 100%;
     font-size: 25px;
 }
 
